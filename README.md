@@ -56,22 +56,22 @@ The submission includes:
 
 ## 🗓️ Development Roadmap
 
-### Wave 1 (Q4 2025) - Foundation
+### Wave 1 - Foundation
 - ✅ System design and architecture
 - 🔄 Synapse SDK integration
 - 🔄 Basic storage and retrieval workflow
 
-### Wave 2 (Q1 2026) - MVP
+### Wave 2 - MVP
 - Complete signing workflow
 - FilCDN integration
 - Alpha testing with partners
 
-### Wave 3 (Q2 2026) - Enterprise Features  
+### Wave 3 - Enterprise Features  
 - Advanced compliance reporting
 - Enterprise dashboard
 - Beta testing with regulated industries
 
-### Wave 4 (Q3 2026) - Market Launch
+### Wave 4 - Market Launch
 - Production platform launch
 - Customer pilots
 - Regulatory certifications
@@ -89,10 +89,6 @@ We're committed to active participation in the Filecoin ecosystem:
 - Compliance module development
 - Knowledge sharing through documentation and case studies
 - Regular technical advisory and business reviews
-
-## 📞 Contact
-
-[Your contact information]
 
 ---
 
