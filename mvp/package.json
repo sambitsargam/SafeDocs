@@ -1,0 +1,47 @@
+{
+  "name": "safedocs-mvp",
+  "version": "1.0.0",
+  "description": "SafeDocs MVP - Decentralized e-signature platform on Filecoin",
+  "scripts": {
+    "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:frontend": "cd frontend && npm start",
+    "dev:backend": "cd backend && npm run dev",
+    "build": "cd frontend && npm run build && cd ../backend && npm run build",
+    "test": "npm run test:backend && npm run test:frontend",
+    "test:backend": "cd backend && npm test",
+    "test:frontend": "cd frontend && npm test",
+    "test:integration": "jest --config=jest.integration.config.js",
+    "test:e2e": "playwright test",
+    "lint": "eslint . --ext .ts,.tsx,.js,.jsx",
+    "lint:fix": "eslint . --ext .ts,.tsx,.js,.jsx --fix",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "clean": "rm -rf node_modules frontend/node_modules backend/node_modules"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.40.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "concurrently": "^8.2.0",
+    "eslint": "^8.45.0",
+    "eslint-plugin-react": "^7.33.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "jest": "^29.6.0",
+    "typescript": "^5.1.0"
+  },
+  "keywords": [
+    "filecoin",
+    "e-signature",
+    "blockchain",
+    "decentralized",
+    "compliance",
+    "digital-signatures"
+  ],
+  "author": "SafeDocs Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sambitsargam/SafeDocs"
+  }
+}
