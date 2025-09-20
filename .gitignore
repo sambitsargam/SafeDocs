@@ -1,0 +1,39 @@
+node_modules/
+dist/
+build/
+.env
+.env.local
+.env.production
+*.log
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Frontend specific
+frontend/dist/
+frontend/build/
+frontend/.next/
+
+# Backend specific
+backend/dist/
+backend/uploads/
+backend/logs/
+
+# Database
+*.db
+*.sqlite
+
+# Filecoin storage
+.filecoin/
+storage/
+temp/
+
+# Testing
+coverage/
+.nyc_output/
+
+# Docker
+docker-compose.override.yml
