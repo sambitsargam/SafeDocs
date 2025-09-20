@@ -16,6 +16,7 @@ import { prisma } from './utils/database';
 import authRoutes from './routes/auth';
 import { documentRoutes } from './routes/documents';
 import verificationRoutes from './routes/verification';
+import complianceRoutes from './routes/compliance';
 
 // Load environment variables
 dotenv.config();
@@ -91,6 +92,7 @@ async function startServer() {
     app.use('/api/auth', authRoutes);
     app.use('/api/documents', documentRoutes);
     app.use('/api/verification', verificationRoutes);
+    app.use('/api/compliance', complianceRoutes);
     app.use('/api', authMiddleware);
     
     // Error handling middleware (must be last)
