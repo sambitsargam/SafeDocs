@@ -153,7 +153,7 @@ export class FilecoinStorageService {
 
       // Decrypt if key provided
       if (decryptionKey) {
-        buffer = await this.decryptDocument(buffer, decryptionKey) as Buffer;
+        buffer = Buffer.from(await this.decryptDocument(buffer, decryptionKey));
       }
 
       // Verify document integrity

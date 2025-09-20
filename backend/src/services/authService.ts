@@ -26,18 +26,6 @@ export interface WalletAuthMessage {
   expirationTime: string;
 }
 
-export interface WalletAuthMessage {
-  message: string;
-  domain: string;
-  address: string;
-  uri: string;
-  version: string;
-  chainId: number;
-  nonce: string;
-  issuedAt: string;
-  expirationTime?: string;
-}
-
 export interface AuthenticationResult {
   user: any;
   token: string;
