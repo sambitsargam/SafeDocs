@@ -80,7 +80,7 @@ async function startServer() {
 
     // Apply Apollo GraphQL middleware
     server.applyMiddleware({ 
-      app, 
+      app: app as any, 
       path: '/graphql',
       cors: false, // We handle CORS above
     });

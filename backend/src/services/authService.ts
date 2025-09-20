@@ -3,6 +3,29 @@ import jwt from 'jsonwebtoken';
 import { logger } from '../utils/logger';
 import { prisma } from '../utils/database';
 
+interface SIWEMessageParams {
+  domain: string;
+  address: string;
+  uri: string;
+  version: string;
+  chainId: number;
+  nonce: string;
+  issuedAt: string;
+  expirationTime: string;
+}
+
+export interface WalletAuthMessage {
+  message: string;
+  domain: string;
+  address: string;
+  uri: string;
+  version: string;
+  chainId: number;
+  nonce: string;
+  issuedAt: string;
+  expirationTime: string;
+}
+
 export interface WalletAuthMessage {
   message: string;
   domain: string;
@@ -50,7 +73,7 @@ export class SynapseAuthService {
     const issuedAt = new Date().toISOString();
     const expirationTime = new Date(Date.now() + 10 * 60 * 1000).toISOString(); // 10 minutes
 
-    const message = this.buildSIWEMessage({
+    const messageText = this.buildSIWEMessage({
       domain,
       address: walletAddress,
       uri,
@@ -59,10 +82,10 @@ export class SynapseAuthService {
       nonce,
       issuedAt,
       expirationTime,
-    });
+    } as SIWEMessageParams);
 
     return {
-      message,
+      message: messageText,
       domain,
       address: walletAddress,
       uri,
@@ -196,7 +219,7 @@ export class SynapseAuthService {
         role: user.role 
       },
       this.jwtSecret,
-      { expiresIn: this.jwtExpiresIn }
+      { expiresIn: this.jwtExpiresIn } as jwt.SignOptions
     );
   }
 
@@ -211,7 +234,7 @@ export class SynapseAuthService {
   /**
    * Build SIWE (Sign-In with Ethereum) message
    */
-  private buildSIWEMessage(params: WalletAuthMessage): string {
+  private buildSIWEMessage(params: SIWEMessageParams): string {
     return `SafeDocs wants you to sign in with your Ethereum account:
 ${params.address}
 

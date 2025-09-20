@@ -153,7 +153,7 @@ export class FilecoinStorageService {
 
       // Decrypt if key provided
       if (decryptionKey) {
-        buffer = await this.decryptDocument(buffer, decryptionKey);
+        buffer = await this.decryptDocument(buffer, decryptionKey) as Buffer;
       }
 
       // Verify document integrity
@@ -187,8 +187,7 @@ export class FilecoinStorageService {
       // Upload to Lighthouse for Filecoin deal creation
       const response = await lighthouse.upload(
         buffer,
-        this.lighthouseApiKey,
-        false // Set to true for permanent storage
+        this.lighthouseApiKey
       );
 
       const deal: FilecoinDeal = {

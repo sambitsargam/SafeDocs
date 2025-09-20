@@ -18,7 +18,7 @@ class DatabaseService {
 
       // Log database queries in development
       if (process.env.NODE_ENV === 'development') {
-        DatabaseService.instance.$on('query', (e) => {
+        DatabaseService.instance.$on('query', (e: any) => {
           logger.debug('Database Query:', {
             query: e.query,
             params: e.params,
@@ -28,17 +28,17 @@ class DatabaseService {
       }
 
       // Log database errors
-      DatabaseService.instance.$on('error', (e) => {
+      DatabaseService.instance.$on('error', (e: any) => {
         logger.error('Database Error:', e);
       });
 
       // Log database info
-      DatabaseService.instance.$on('info', (e) => {
+      DatabaseService.instance.$on('info', (e: any) => {
         logger.info('Database Info:', e);
       });
 
       // Log database warnings
-      DatabaseService.instance.$on('warn', (e) => {
+      DatabaseService.instance.$on('warn', (e: any) => {
         logger.warn('Database Warning:', e);
       });
     }
