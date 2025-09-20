@@ -1,226 +1,144 @@
-import { jest } from '@jest/globals';
+// Test setup and global configurations
 
 // Mock environment variables
 process.env.NODE_ENV = 'test';
 process.env.DATABASE_URL = 'postgresql://test:test@localhost:5432/safedocs_test';
-process.env.JWT_SECRET = 'test-jwt-secret-key-for-testing-only';
-process.env.FILECOIN_TOKEN = 'test-filecoin-token';
+process.env.JWT_SECRET = 'test-jwt-secret';
+process.env.ENCRYPTION_KEY = 'test-encryption-key-32-characters-long';
 process.env.LIGHTHOUSE_API_KEY = 'test-lighthouse-key';
+process.env.WEB3_STORAGE_TOKEN = 'test-web3-storage-token';
 
-// Mock external dependencies
-jest.mock('../utils/logger', () => ({
-  logger: {
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
-    debug: jest.fn(),
-  },
-}));
+// Global test timeout
+jest.setTimeout(30000);
 
-jest.mock('../utils/database', () => ({
-  prisma: {
+// Mock Prisma Client
+jest.mock('@prisma/client', () => ({
+  PrismaClient: jest.fn().mockImplementation(() => ({
     $connect: jest.fn(),
     $disconnect: jest.fn(),
-    user: {
-      findUnique: jest.fn(),
-      findMany: jest.fn(),
-      create: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
-      count: jest.fn(),
-    },
     document: {
+      create: jest.fn(),
       findUnique: jest.fn(),
       findMany: jest.fn(),
-      create: jest.fn(),
       update: jest.fn(),
       delete: jest.fn(),
-      count: jest.fn(),
+    },
+    user: {
+      create: jest.fn(),
+      findUnique: jest.fn(),
+      findMany: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
     },
     signature: {
-      findUnique: jest.fn(),
-      findMany: jest.fn(),
       create: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
-    },
-    storageProof: {
-      findUnique: jest.fn(),
       findMany: jest.fn(),
-      create: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
-    },
-    auditLog: {
-      findUnique: jest.fn(),
-      findMany: jest.fn(),
-      create: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
-      count: jest.fn(),
     },
     verificationResult: {
+      create: jest.fn(),
       findUnique: jest.fn(),
       findMany: jest.fn(),
-      create: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
-      count: jest.fn(),
-      aggregate: jest.fn(),
-      groupBy: jest.fn(),
     },
     complianceReport: {
-      findUnique: jest.fn(),
-      findMany: jest.fn(),
       create: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
-      count: jest.fn(),
+      findMany: jest.fn(),
     },
-    $queryRaw: jest.fn(),
-  },
+    auditLog: {
+      create: jest.fn(),
+      findMany: jest.fn(),
+    },
+  })),
+}));
+
+// Mock Redis
+jest.mock('redis', () => ({
+  createClient: jest.fn(() => ({
+    connect: jest.fn(),
+    disconnect: jest.fn(),
+    get: jest.fn(),
+    set: jest.fn(),
+    del: jest.fn(),
+    exists: jest.fn(),
+  })),
 }));
 
 // Mock Filecoin/IPFS services
-jest.mock('../services/filecoinStorage', () => ({
-  filecoinStorage: {
-    storeDocument: jest.fn(),
-    retrieveDocument: jest.fn(),
-    verifyDocumentIntegrity: jest.fn(),
-    generateStorageProof: jest.fn(),
-    calculateStorageCost: jest.fn(),
-    encryptDocument: jest.fn(),
-    decryptDocument: jest.fn(),
-  },
+jest.mock('@lighthouse-web3/sdk', () => ({
+  upload: jest.fn(),
+  getBalance: jest.fn(),
+  dealStatus: jest.fn(),
 }));
 
-jest.mock('../services/filCDNService', () => ({
-  filCDNService: {
-    retrieveDocument: jest.fn(),
-    prewarmCache: jest.fn(),
-    invalidateCache: jest.fn(),
-    getCDNAnalytics: jest.fn(),
-    getOptimalNode: jest.fn(),
-  },
+jest.mock('@web3-storage/w3up-client', () => ({
+  create: jest.fn(() => ({
+    uploadFile: jest.fn(),
+    uploadDirectory: jest.fn(),
+  })),
 }));
 
-// Mock authentication services
-jest.mock('../services/synapseAuthService', () => ({
-  synapseAuthService: {
-    generateSIWEMessage: jest.fn(),
-    verifySIWESignature: jest.fn(),
-    generateJWT: jest.fn(),
-    verifyJWT: jest.fn(),
-    refreshToken: jest.fn(),
-  },
+// Mock crypto operations
+jest.mock('crypto', () => ({
+  randomBytes: jest.fn(() => Buffer.from('test-random-bytes')),
+  createHash: jest.fn(() => ({
+    update: jest.fn(),
+    digest: jest.fn(() => 'test-hash'),
+  })),
+  createCipher: jest.fn(() => ({
+    update: jest.fn(),
+    final: jest.fn(),
+  })),
+  createDecipher: jest.fn(() => ({
+    update: jest.fn(),
+    final: jest.fn(),
+  })),
 }));
 
-jest.mock('../services/digitalSigningService', () => ({
-  digitalSigningService: {
-    signDocument: jest.fn(),
-    verifySignature: jest.fn(),
-    batchVerifySignatures: jest.fn(),
-    initiateSigningSession: jest.fn(),
-    completeSigningSession: jest.fn(),
-  },
-}));
-
-// Mock ethers for crypto operations
+// Mock ethers for blockchain operations
 jest.mock('ethers', () => ({
-  ethers: {
-    verifyMessage: jest.fn(),
-    getAddress: jest.fn(),
-    isAddress: jest.fn(),
-    utils: {
-      verifyMessage: jest.fn(),
-      getAddress: jest.fn(),
-      isAddress: jest.fn(),
-    },
+  Wallet: jest.fn(() => ({
+    address: '0x1234567890123456789012345678901234567890',
+    signMessage: jest.fn(() => Promise.resolve('test-signature')),
+  })),
+  providers: {
+    JsonRpcProvider: jest.fn(),
+  },
+  utils: {
+    verifyMessage: jest.fn(() => '0x1234567890123456789012345678901234567890'),
+    hashMessage: jest.fn(() => 'test-message-hash'),
   },
 }));
 
-// Global test utilities
-declare global {
-  var createMockUser: () => any;
-  var createMockDocument: () => any;
-  var createMockSignature: () => any;
-  var createMockStorageProof: () => any;
-}
-
-(global as any).createMockUser = () => ({
-  id: 'test-user-id',
-  walletAddress: '0x1234567890123456789012345678901234567890',
-  email: 'test@example.com',
-  displayName: 'Test User',
-  role: 'USER',
-  isEmailVerified: true,
-  createdAt: new Date(),
-  updatedAt: new Date(),
-});
-
-(global as any).createMockDocument = () => ({
-  id: 'test-document-id',
-  title: 'Test Document',
-  description: 'Test document description',
-  originalFileName: 'test.pdf',
-  mimeType: 'application/pdf',
-  fileSize: 1024,
-  documentHash: 'test-hash-123',
-  encryptedData: 'encrypted-key-data',
-  ipfsCid: 'QmTestCid123',
-  filecoinDealId: 'deal-123',
-  uploadedBy: 'test-user-id',
-  status: 'UPLOADED',
-  isEncrypted: true,
-  retentionPeriod: 365,
-  complianceLevel: 'STANDARD',
-  createdAt: new Date(),
-  updatedAt: new Date(),
-});
-
-(global as any).createMockSignature = () => ({
-  id: 'test-signature-id',
-  documentId: 'test-document-id',
-  signerId: 'test-signer-id',
-  signerWalletAddress: '0x1234567890123456789012345678901234567890',
-  signerName: 'Test Signer',
-  signerEmail: 'signer@example.com',
-  signatureData: 'signature-data-123',
-  signatureAlgorithm: 'ECDSA',
-  timestampSigned: new Date(),
-  ipLocation: '127.0.0.1',
-  deviceInfo: 'Test Device',
-  isVerified: true,
-  verificationProof: 'verification-proof-123',
-  blockchainTxHash: 'tx-hash-123',
-  createdAt: new Date(),
-});
-
-(global as any).createMockStorageProof = () => ({
-  id: 'test-proof-id',
-  documentId: 'test-document-id',
-  proofType: 'PDP',
-  proofData: JSON.stringify({
-    hash: 'proof-hash-123',
-    challenge: 'challenge-123',
-    response: 'response-123',
-    timestamp: new Date().toISOString(),
-  }),
-  blockchainTxHash: 'tx-hash-123',
-  storageProvider: 'Filecoin',
-  isValid: true,
-  verificationCount: 1,
-  lastVerified: new Date(),
-  createdAt: new Date(),
-});
-
-// Set up test timeouts
-jest.setTimeout(10000);
+// Mock Winston logger
+jest.mock('winston', () => ({
+  createLogger: jest.fn(() => ({
+    info: jest.fn(),
+    error: jest.fn(),
+    warn: jest.fn(),
+    debug: jest.fn(),
+    add: jest.fn(), // Add the missing 'add' method
+  })),
+  transports: {
+    Console: jest.fn(),
+    File: jest.fn(),
+  },
+  format: {
+    combine: jest.fn(),
+    timestamp: jest.fn(),
+    errors: jest.fn(),
+    json: jest.fn(),
+    colorize: jest.fn(),
+    simple: jest.fn(),
+  },
+}));
 
 // Clean up after each test
 afterEach(() => {
   jest.clearAllMocks();
 });
 
-// Export jest for TypeScript
-export { jest };
+// Global error handler for unhandled promises
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
+export {};
