@@ -5,75 +5,8 @@ generator client {
   provider = "prisma-client-js"
 }
 
-damodel AuditLog {
-  id               String           @id @default(cuid())
-  userId           String?
-  documentId       String?
-  action           String
-  details          String
-  ipAddress        String
-  userAgent        String
-  timestamp        DateTime         @default(now())
-  complianceLevel  ComplianceLevel?
-  retentionDate    DateTime?
-
-  // Relations
-  user     User?     @relation(fields: [userId], references: [id])
-  document Document? @relation(fields: [documentId], references: [id])
-
-  @@index([userId])
-  @@index([documentId])
-  @@index([action])
-  @@index([timestamp])
-  @@index([complianceLevel])
-  @@index([retentionDate])
-}
-
-model VerificationResult {
-  id                String           @id
-  documentId        String
-  verificationLevel String // BASIC, STANDARD, ENHANCED, MAXIMUM
-  isValid           Boolean
-  confidence        Int // 0-100
-  checks            Json
-  details           Json
-  metrics           Json
-  anomalies         String[]
-  warnings          String[]
-  recommendations   String[]
-  createdAt         DateTime         @default(now())
-
-  // Relations
-  document          Document         @relation(fields: [documentId], references: [id])
-
-  @@index([documentId])
-  @@index([verificationLevel])
-  @@index([isValid])
-  @@index([confidence])
-  @@index([createdAt])
-}
-
-model ComplianceReport {
-  id                String           @id
-  framework         String // HIPAA, SOX, GDPR, SOC2, ALL
-  generatedBy       String
-  timeRangeStart    DateTime
-  timeRangeEnd      DateTime
-  summary           Json
-  findings          Json
-  recommendations   String[]
-  certificationStatus String // COMPLIANT, NON_COMPLIANT, NEEDS_REVIEW
-  reportData        Json
-  createdAt         DateTime         @default(now())
-
-  // Relations
-  generator         User             @relation(fields: [generatedBy], references: [id])
-
-  @@index([framework])
-  @@index([generatedBy])
-  @@index([certificationStatus])
-  @@index([createdAt])
-}ovider = "postgresql"
+datasource db {
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -81,6 +14,28 @@ enum UserRole {
   USER
   ADMIN
   ENTERPRISE
+}
+
+enum SubscriptionTier {
+  FREE
+  PROFESSIONAL
+  TEAM
+  ENTERPRISE
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELLED
+  EXPIRED
+  TRIAL
+  SUSPENDED
+}
+
+enum TeamMemberRole {
+  OWNER
+  ADMIN
+  MEMBER
+  VIEWER
 }
 
 enum DocumentStatus {
@@ -114,10 +69,10 @@ enum SigningMethod {
 }
 
 enum ProofType {
-  PDP // Proof of Data Possession
-  POR // Proof of Retrievability
-  POW // Proof of Work
-  POS // Proof of Storage
+  PDP
+  POR
+  POW
+  POS
 }
 
 enum AuditAction {
@@ -146,14 +101,17 @@ model User {
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
   lastLoginAt      DateTime?
-
-  // Relations
-  documents         Document[]
-  signatures        Signature[]
-  auditLogs         AuditLog[]
+  teamMemberships  TeamMember[]
+  ownedTeams       Team[]    @relation("TeamOwner")
+  documents        Document[]
+  signatures       Signature[]
+  auditLogs        AuditLog[]
   complianceReports ComplianceReport[]
 
   @@map("users")
+  @@index([walletAddress])
+  @@index([email])
+  @@index([createdAt])
 }
 
 model Document {
@@ -164,97 +122,24 @@ model Document {
   mimeType        String
   fileSize        Int
   documentHash    String          @unique
-  encryptedData   String          // Base64 encoded encrypted document
+  encryptedData   String
   ipfsCid         String          @unique
   filecoinDealId  String?         @unique
   uploadedBy      String
   status          DocumentStatus  @default(UPLOADING)
   isEncrypted     Boolean         @default(true)
-  retentionPeriod Int?            // in days
+  retentionPeriod Int?
   complianceLevel ComplianceLevel @default(STANDARD)
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
-
-  // Relations
-  uploader           User                 @relation(fields: [uploadedBy], references: [id])
-  signatures         Signature[]
-  storageProofs      StorageProof[]
-  auditLogs          AuditLog[]
+  uploader        User            @relation(fields: [uploadedBy], references: [id])
+  signatures      Signature[]
+  storageProofs   StorageProof[]
+  auditLogs       AuditLog[]
   verificationResults VerificationResult[]
+  teamShares      TeamDocument[]
 
   @@map("documents")
-}
-
-model Signature {
-  id                   String             @id @default(cuid())
-  documentId           String
-  signerId             String
-  signerWalletAddress  String
-  signerName           String
-  signerEmail          String?
-  signatureData        String             // Base64 encoded signature
-  signatureAlgorithm   SignatureAlgorithm
-  signatureMetadata    Json               // SignatureMetadata as JSON
-  timestampSigned      DateTime           @default(now())
-  ipLocation           String?
-  deviceInfo           String?
-  isVerified           Boolean            @default(false)
-  verificationProof    String?
-  blockchainTxHash     String?
-
-  // Relations
-  document             Document           @relation(fields: [documentId], references: [id], onDelete: Cascade)
-  signer               User               @relation(fields: [signerId], references: [id])
-
-  @@map("signatures")
-}
-
-model StorageProof {
-  id                String    @id @default(cuid())
-  documentId        String
-  proofType         ProofType
-  proofData         String    // Base64 encoded proof data
-  blockchainTxHash  String    @unique
-  storageProvider   String
-  createdAt         DateTime  @default(now())
-  expiresAt         DateTime?
-  isValid           Boolean   @default(true)
-  verificationCount Int       @default(0)
-  lastVerifiedAt    DateTime?
-
-  // Relations
-  document          Document  @relation(fields: [documentId], references: [id], onDelete: Cascade)
-
-  @@map("storage_proofs")
-}
-
-model AuditLog {
-  id              String          @id @default(cuid())
-  userId          String?
-  documentId      String?
-  action          AuditAction
-  details         Json            // Additional action details
-  ipAddress       String
-  userAgent       String
-  timestamp       DateTime        @default(now())
-  complianceLevel ComplianceLevel
-  retentionDate   DateTime        // When this log can be deleted
-
-  // Relations
-  user            User?           @relation(fields: [userId], references: [id])
-  document        Document?       @relation(fields: [documentId], references: [id])
-
-  @@map("audit_logs")
-}
-
-// Indexes for performance
-model User {
-  @@index([walletAddress])
-  @@index([email])
-  @@index([createdAt])
-}
-
-model Document {
   @@index([uploadedBy])
   @@index([status])
   @@index([complianceLevel])
@@ -264,6 +149,25 @@ model Document {
 }
 
 model Signature {
+  id                   String             @id @default(cuid())
+  documentId           String
+  signerId             String
+  signerWalletAddress  String
+  signerName           String
+  signerEmail          String?
+  signatureData        String
+  signatureAlgorithm   SignatureAlgorithm
+  signatureMetadata    Json
+  timestampSigned      DateTime           @default(now())
+  ipLocation           String?
+  deviceInfo           String?
+  isVerified           Boolean            @default(false)
+  verificationProof    String?
+  blockchainTxHash     String?
+  document             Document           @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  signer               User               @relation(fields: [signerId], references: [id])
+
+  @@map("signatures")
   @@index([documentId])
   @@index([signerId])
   @@index([timestampSigned])
@@ -271,6 +175,20 @@ model Signature {
 }
 
 model StorageProof {
+  id                String    @id @default(cuid())
+  documentId        String
+  proofType         ProofType
+  proofData         String
+  blockchainTxHash  String    @unique
+  storageProvider   String
+  createdAt         DateTime  @default(now())
+  expiresAt         DateTime?
+  isValid           Boolean   @default(true)
+  verificationCount Int       @default(0)
+  lastVerifiedAt    DateTime?
+  document          Document  @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@map("storage_proofs")
   @@index([documentId])
   @@index([proofType])
   @@index([isValid])
@@ -278,10 +196,173 @@ model StorageProof {
 }
 
 model AuditLog {
+  id              String          @id @default(cuid())
+  userId          String?
+  documentId      String?
+  action          AuditAction
+  details         Json
+  ipAddress       String
+  userAgent       String
+  timestamp       DateTime        @default(now())
+  complianceLevel ComplianceLevel
+  retentionDate   DateTime
+  user            User?           @relation(fields: [userId], references: [id])
+  document        Document?       @relation(fields: [documentId], references: [id])
+
+  @@map("audit_logs")
   @@index([userId])
   @@index([documentId])
   @@index([action])
   @@index([timestamp])
   @@index([complianceLevel])
   @@index([retentionDate])
+}
+
+model VerificationResult {
+  id                String    @id @default(cuid())
+  documentId        String
+  verificationLevel String
+  isValid           Boolean
+  confidence        Int
+  checks            Json
+  details           Json
+  metrics           Json
+  anomalies         String[]
+  warnings          String[]
+  recommendations   String[]
+  createdAt         DateTime  @default(now())
+  document          Document  @relation(fields: [documentId], references: [id])
+
+  @@map("verification_results")
+  @@index([documentId])
+  @@index([verificationLevel])
+  @@index([isValid])
+  @@index([confidence])
+  @@index([createdAt])
+}
+
+model ComplianceReport {
+  id                  String    @id @default(cuid())
+  framework           String
+  generatedBy         String
+  timeRangeStart      DateTime
+  timeRangeEnd        DateTime
+  summary             Json
+  findings            Json
+  recommendations     String[]
+  certificationStatus String
+  reportData          Json
+  createdAt           DateTime  @default(now())
+  generator           User      @relation(fields: [generatedBy], references: [id])
+
+  @@map("compliance_reports")
+  @@index([framework])
+  @@index([generatedBy])
+  @@index([certificationStatus])
+  @@index([createdAt])
+}
+
+model Team {
+  id              String        @id @default(cuid())
+  name            String
+  description     String?
+  ownerId         String
+  subscriptionId  String?       @unique
+  settings        Json          @default("{}")
+  isActive        Boolean       @default(true)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  owner           User          @relation("TeamOwner", fields: [ownerId], references: [id])
+  members         TeamMember[]
+  subscription    Subscription? @relation(fields: [subscriptionId], references: [id])
+  documents       TeamDocument[]
+
+  @@map("teams")
+  @@index([ownerId])
+  @@index([subscriptionId])
+  @@index([createdAt])
+}
+
+model TeamMember {
+  id          String         @id @default(cuid())
+  teamId      String
+  userId      String
+  role        TeamMemberRole @default(MEMBER)
+  permissions Json           @default("[]")
+  invitedBy   String?
+  joinedAt    DateTime       @default(now())
+  isActive    Boolean        @default(true)
+  team        Team           @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, userId])
+  @@map("team_members")
+  @@index([teamId])
+  @@index([userId])
+  @@index([role])
+}
+
+model Subscription {
+  id           String              @id @default(cuid())
+  tier         SubscriptionTier    @default(FREE)
+  status       SubscriptionStatus  @default(ACTIVE)
+  startDate    DateTime            @default(now())
+  endDate      DateTime?
+  trialEndDate DateTime?
+  billingCycle String              @default("monthly")
+  price        Float               @default(0)
+  currency     String              @default("USD")
+  maxMembers   Int                 @default(1)
+  maxDocuments Int                 @default(10)
+  maxStorage   BigInt              @default(1073741824)
+  features     Json                @default("[]")
+  metadata     Json                @default("{}")
+  cancelledAt  DateTime?
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+  team         Team?
+  invoices     Invoice[]
+
+  @@map("subscriptions")
+  @@index([tier])
+  @@index([status])
+  @@index([startDate])
+  @@index([endDate])
+}
+
+model Invoice {
+  id             String       @id @default(cuid())
+  subscriptionId String
+  amount         Float
+  currency       String       @default("USD")
+  status         String       @default("pending")
+  dueDate        DateTime
+  paidAt         DateTime?
+  invoiceNumber  String       @unique
+  invoiceUrl     String?
+  metadata       Json         @default("{}")
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@map("invoices")
+  @@index([subscriptionId])
+  @@index([status])
+  @@index([dueDate])
+}
+
+model TeamDocument {
+  id          String   @id @default(cuid())
+  teamId      String
+  documentId  String
+  sharedBy    String
+  permissions Json     @default("[]")
+  sharedAt    DateTime @default(now())
+  team        Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  document    Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, documentId])
+  @@map("team_documents")
+  @@index([teamId])
+  @@index([documentId])
 }

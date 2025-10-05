@@ -8,6 +8,9 @@ import DocumentsPage from './pages/DocumentsPage';
 import SigningPage from './pages/SigningPage';
 import VerificationPage from './pages/VerificationPage';
 import DashboardPage from './pages/DashboardPage';
+import EnterpriseDashboardPage from './pages/EnterpriseDashboardPage';
+import TeamManagementPage from './pages/TeamManagementPage';
+import ComplianceReportsPage from './pages/ComplianceReportsPage';
 import { useAuthStore } from './store/authStore';
 
 function App(): JSX.Element {
@@ -21,6 +24,18 @@ function App(): JSX.Element {
           <Route 
             path="/dashboard" 
             element={isAuthenticated ? <DashboardPage /> : <Navigate to="/" />} 
+          />
+          <Route 
+            path="/enterprise" 
+            element={isAuthenticated ? <EnterpriseDashboardPage /> : <Navigate to="/" />} 
+          />
+          <Route 
+            path="/teams" 
+            element={isAuthenticated ? <TeamManagementPage /> : <Navigate to="/" />} 
+          />
+          <Route 
+            path="/compliance" 
+            element={isAuthenticated ? <ComplianceReportsPage /> : <Navigate to="/" />} 
           />
           <Route 
             path="/documents" 
