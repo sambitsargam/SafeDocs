@@ -18,6 +18,7 @@ import { documentRoutes } from './routes/documents';
 import verificationRoutes from './routes/verification';
 import complianceRoutes from './routes/compliance';
 import teamRoutes from './routes/teams';
+import pilotRoutes from './routes/pilots';
 
 // Load environment variables
 dotenv.config();
@@ -95,6 +96,7 @@ async function startServer() {
     app.use('/api/verification', verificationRoutes);
     app.use('/api/compliance', complianceRoutes);
     app.use('/api/teams', teamRoutes);
+    app.use('/api/pilots', pilotRoutes);
     app.use('/api', authMiddleware);
     
     // Error handling middleware (must be last)

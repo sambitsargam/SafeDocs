@@ -59,6 +59,7 @@ const EnterpriseDashboardPage: React.FC = () => {
   const [complianceData, setComplianceData] = useState<any>(null);
   const [teams, setTeams] = useState<any[]>([]);
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
+  const [pilotStats, setPilotStats] = useState<any>(null);
 
   useEffect(() => {
     loadDashboardData();
@@ -67,13 +68,15 @@ const EnterpriseDashboardPage: React.FC = () => {
   const loadDashboardData = async () => {
     try {
       setLoading(true);
-      const [complianceRes, teamsRes] = await Promise.all([
+      const [complianceRes, teamsRes, pilotRes] = await Promise.all([
         axios.get('/api/compliance/dashboard?timeRange=month'),
         axios.get('/api/teams'),
+        axios.get('/api/pilots/stats').catch(() => ({ data: { data: null } })),
       ]);
 
       setComplianceData(complianceRes.data.data);
       setTeams(teamsRes.data.data);
+      setPilotStats(pilotRes.data.data);
     } catch (error) {
       console.error('Failed to load dashboard data:', error);
       toast.error('Failed to load dashboard data');
@@ -246,13 +249,22 @@ const EnterpriseDashboardPage: React.FC = () => {
         </Grid>
       </Grid>
 
+      {/* Pilot Program Alert */}
+      {pilotStats && pilotStats.activePilots > 0 && (
+        <Alert severity="info" icon={<TrendingUp />} sx={{ mb: 3 }}>
+          <strong>Active Pilot Programs:</strong> {pilotStats.activePilots} pilot(s) running with{' '}
+          {pilotStats.totalParticipants} participant(s). Average satisfaction: {pilotStats.avgSatisfaction?.toFixed(1)}/5
+        </Alert>
+      )}
+
       {/* Tabs */}
       <Paper sx={{ mb: 3 }}>
-        <Tabs value={tabValue} onChange={(e, val) => setTabValue(val)}>
+        <Tabs value={tabValue} onChange={(_, val) => setTabValue(val)}>
           <Tab label="Overview" />
           <Tab label="Teams" />
           <Tab label="Compliance" />
           <Tab label="Activity" />
+          {pilotStats && <Tab label="Pilot Programs" />}
         </Tabs>
       </Paper>
 
@@ -533,6 +545,108 @@ const EnterpriseDashboardPage: React.FC = () => {
           </TableContainer>
         </Paper>
       </TabPanel>
+
+      {/* Pilot Programs Tab */}
+      {pilotStats && (
+        <TabPanel value={tabValue} index={4}>
+          <Grid container spacing={3}>
+            <Grid item xs={12} md={6} lg={3}>
+              <Card elevation={2}>
+                <CardContent>
+                  <Typography variant="body2" color="text.secondary" gutterBottom>
+                    Active Pilots
+                  </Typography>
+                  <Typography variant="h4" fontWeight="bold">
+                    {pilotStats.activePilots || 0}
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+
+            <Grid item xs={12} md={6} lg={3}>
+              <Card elevation={2}>
+                <CardContent>
+                  <Typography variant="body2" color="text.secondary" gutterBottom>
+                    Total Participants
+                  </Typography>
+                  <Typography variant="h4" fontWeight="bold">
+                    {pilotStats.totalParticipants || 0}
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+
+            <Grid item xs={12} md={6} lg={3}>
+              <Card elevation={2}>
+                <CardContent>
+                  <Typography variant="body2" color="text.secondary" gutterBottom>
+                    Active Participants
+                  </Typography>
+                  <Typography variant="h4" fontWeight="bold">
+                    {pilotStats.activeParticipants || 0}
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+
+            <Grid item xs={12} md={6} lg={3}>
+              <Card elevation={2}>
+                <CardContent>
+                  <Typography variant="body2" color="text.secondary" gutterBottom>
+                    Avg Satisfaction
+                  </Typography>
+                  <Typography variant="h4" fontWeight="bold" color="primary">
+                    {pilotStats.avgSatisfaction?.toFixed(1) || 'N/A'}/5
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+
+            <Grid item xs={12}>
+              <Paper sx={{ p: 3 }}>
+                <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                  <Typography variant="h6">Recent Pilot Activity</Typography>
+                  <Button variant="outlined" href="/pilots">
+                    View All Pilots
+                  </Button>
+                </Box>
+
+                <Grid container spacing={2}>
+                  {pilotStats.recentPilots?.map((pilot: any) => (
+                    <Grid item xs={12} md={6} key={pilot.id}>
+                      <Card variant="outlined">
+                        <CardContent>
+                          <Box display="flex" justifyContent="space-between" alignItems="start" mb={1}>
+                            <Typography variant="h6">{pilot.name}</Typography>
+                            <Chip label={pilot.status} size="small" color={pilot.status === 'ACTIVE' ? 'success' : 'default'} />
+                          </Box>
+                          <Typography variant="body2" color="text.secondary" gutterBottom>
+                            {pilot.industry}
+                          </Typography>
+                          <Box mt={2}>
+                            <Typography variant="body2" color="text.secondary">
+                              Progress: {pilot.currentParticipants}/{pilot.targetParticipants}
+                            </Typography>
+                            <LinearProgress
+                              variant="determinate"
+                              value={(pilot.currentParticipants / pilot.targetParticipants) * 100}
+                              sx={{ mt: 1 }}
+                            />
+                          </Box>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                  )) || (
+                    <Grid item xs={12}>
+                      <Alert severity="info">No pilot programs active yet.</Alert>
+                    </Grid>
+                  )}
+                </Grid>
+              </Paper>
+            </Grid>
+          </Grid>
+        </TabPanel>
+      )}
     </Box>
   );
 };
