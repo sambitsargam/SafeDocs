@@ -292,3 +292,206 @@ export enum Environment {
   STAGING = 'staging',
   PRODUCTION = 'production'
 }
+
+// Pilot Program types
+export enum IndustryType {
+  LAW_FIRM = 'LAW_FIRM',
+  HEALTHCARE = 'HEALTHCARE',
+  FINANCE = 'FINANCE',
+  GOVERNMENT = 'GOVERNMENT',
+  REAL_ESTATE = 'REAL_ESTATE',
+  EDUCATION = 'EDUCATION',
+  OTHER = 'OTHER'
+}
+
+export enum PilotStatus {
+  PENDING = 'PENDING',
+  APPROVED = 'APPROVED',
+  ACTIVE = 'ACTIVE',
+  COMPLETED = 'COMPLETED',
+  CANCELLED = 'CANCELLED',
+  REJECTED = 'REJECTED'
+}
+
+export enum PilotGoal {
+  COST_REDUCTION = 'COST_REDUCTION',
+  COMPLIANCE_IMPROVEMENT = 'COMPLIANCE_IMPROVEMENT',
+  WORKFLOW_EFFICIENCY = 'WORKFLOW_EFFICIENCY',
+  SECURITY_ENHANCEMENT = 'SECURITY_ENHANCEMENT',
+  SCALABILITY_TEST = 'SCALABILITY_TEST'
+}
+
+export interface PilotProgram {
+  id: string;
+  organizationName: string;
+  industryType: IndustryType;
+  contactPerson: string;
+  contactEmail: string;
+  contactPhone?: string;
+  companySize: CompanySize;
+  currentSolution?: string;
+  estimatedDocumentVolume: number;
+  status: PilotStatus;
+  startDate?: Date;
+  endDate?: Date;
+  goals: PilotGoal[];
+  specialRequirements?: string;
+  complianceNeeds: ComplianceLevel[];
+  createdAt: Date;
+  updatedAt: Date;
+  approvedBy?: string;
+  approvedAt?: Date;
+  completionReport?: string;
+}
+
+export enum CompanySize {
+  SMALL = 'SMALL',          // 1-50 employees
+  MEDIUM = 'MEDIUM',        // 51-250 employees
+  LARGE = 'LARGE',          // 251-1000 employees
+  ENTERPRISE = 'ENTERPRISE' // 1000+ employees
+}
+
+export interface PilotParticipant {
+  id: string;
+  pilotProgramId: string;
+  userId: string;
+  role: string;
+  department?: string;
+  joinedAt: Date;
+  isActive: boolean;
+  usageStats?: PilotUsageStats;
+}
+
+export interface PilotUsageStats {
+  documentsUploaded: number;
+  documentsSigned: number;
+  verificationsPerformed: number;
+  totalStorageUsed: number;
+  averageSigningTime: number;
+  collaborationCount: number;
+  lastActivity: Date;
+}
+
+export interface PilotFeedback {
+  id: string;
+  pilotProgramId: string;
+  participantId: string;
+  category: FeedbackCategory;
+  rating: number; // 1-5
+  feedback: string;
+  suggestedImprovements?: string;
+  wouldRecommend: boolean;
+  createdAt: Date;
+  isPublic: boolean;
+}
+
+export enum FeedbackCategory {
+  EASE_OF_USE = 'EASE_OF_USE',
+  PERFORMANCE = 'PERFORMANCE',
+  FEATURES = 'FEATURES',
+  SUPPORT = 'SUPPORT',
+  COMPLIANCE = 'COMPLIANCE',
+  INTEGRATION = 'INTEGRATION',
+  COST_VALUE = 'COST_VALUE',
+  OVERALL = 'OVERALL'
+}
+
+export interface IndustryTemplate {
+  id: string;
+  industryType: IndustryType;
+  name: string;
+  description: string;
+  templateType: TemplateType;
+  documentFields: TemplateField[];
+  workflowSteps: WorkflowStep[];
+  complianceLevel: ComplianceLevel;
+  estimatedCompletionTime: number; // in minutes
+  isActive: boolean;
+  usageCount: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export enum TemplateType {
+  LEGAL_CONTRACT = 'LEGAL_CONTRACT',
+  PATIENT_CONSENT = 'PATIENT_CONSENT',
+  HIPAA_AUTHORIZATION = 'HIPAA_AUTHORIZATION',
+  NDA = 'NDA',
+  EMPLOYMENT_AGREEMENT = 'EMPLOYMENT_AGREEMENT',
+  REAL_ESTATE_CONTRACT = 'REAL_ESTATE_CONTRACT',
+  FINANCIAL_AGREEMENT = 'FINANCIAL_AGREEMENT',
+  CUSTOM = 'CUSTOM'
+}
+
+export interface TemplateField {
+  name: string;
+  label: string;
+  type: FieldType;
+  required: boolean;
+  validation?: string;
+  defaultValue?: string;
+  options?: string[];
+  helpText?: string;
+}
+
+export enum FieldType {
+  TEXT = 'TEXT',
+  EMAIL = 'EMAIL',
+  PHONE = 'PHONE',
+  DATE = 'DATE',
+  NUMBER = 'NUMBER',
+  SELECT = 'SELECT',
+  MULTISELECT = 'MULTISELECT',
+  TEXTAREA = 'TEXTAREA',
+  CHECKBOX = 'CHECKBOX',
+  SIGNATURE = 'SIGNATURE',
+  FILE_UPLOAD = 'FILE_UPLOAD'
+}
+
+export interface WorkflowStep {
+  order: number;
+  name: string;
+  description: string;
+  assignedRole: string;
+  action: WorkflowAction;
+  requiredFields?: string[];
+  autoAdvance: boolean;
+  estimatedDuration: number; // in minutes
+}
+
+export enum WorkflowAction {
+  REVIEW = 'REVIEW',
+  SIGN = 'SIGN',
+  APPROVE = 'APPROVE',
+  VERIFY = 'VERIFY',
+  ARCHIVE = 'ARCHIVE',
+  NOTIFY = 'NOTIFY'
+}
+
+// Enhanced Team types for pilot programs
+export interface TeamPilotConfig {
+  isPilotParticipant: boolean;
+  pilotProgramId?: string;
+  industryFocus: IndustryType;
+  preferredTemplates: string[];
+  customWorkflows: string[];
+}
+
+// Analytics for pilot programs
+export interface PilotAnalytics {
+  programId: string;
+  totalParticipants: number;
+  activeParticipants: number;
+  documentsProcessed: number;
+  signaturesCompleted: number;
+  averageSatisfactionScore: number;
+  costSavings: number;
+  timeToCompletion: number;
+  complianceScore: number;
+  issuesReported: number;
+  issuesResolved: number;
+  period: {
+    startDate: Date;
+    endDate: Date;
+  };
+}

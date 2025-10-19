@@ -90,6 +90,86 @@ enum AuditAction {
   PROOF_VERIFIED
 }
 
+enum IndustryType {
+  LAW_FIRM
+  HEALTHCARE
+  FINANCE
+  GOVERNMENT
+  REAL_ESTATE
+  EDUCATION
+  OTHER
+}
+
+enum PilotStatus {
+  PENDING
+  APPROVED
+  ACTIVE
+  COMPLETED
+  CANCELLED
+  REJECTED
+}
+
+enum PilotGoal {
+  COST_REDUCTION
+  COMPLIANCE_IMPROVEMENT
+  WORKFLOW_EFFICIENCY
+  SECURITY_ENHANCEMENT
+  SCALABILITY_TEST
+}
+
+enum CompanySize {
+  SMALL
+  MEDIUM
+  LARGE
+  ENTERPRISE
+}
+
+enum FeedbackCategory {
+  EASE_OF_USE
+  PERFORMANCE
+  FEATURES
+  SUPPORT
+  COMPLIANCE
+  INTEGRATION
+  COST_VALUE
+  OVERALL
+}
+
+enum TemplateType {
+  LEGAL_CONTRACT
+  PATIENT_CONSENT
+  HIPAA_AUTHORIZATION
+  NDA
+  EMPLOYMENT_AGREEMENT
+  REAL_ESTATE_CONTRACT
+  FINANCIAL_AGREEMENT
+  CUSTOM
+}
+
+enum FieldType {
+  TEXT
+  EMAIL
+  PHONE
+  DATE
+  NUMBER
+  SELECT
+  MULTISELECT
+  TEXTAREA
+  CHECKBOX
+  SIGNATURE
+  FILE_UPLOAD
+}
+
+enum WorkflowAction {
+  REVIEW
+  SIGN
+  APPROVE
+  VERIFY
+  ARCHIVE
+  NOTIFY
+}
+
+
 model User {
   id               String    @id @default(cuid())
   walletAddress    String    @unique
@@ -107,6 +187,7 @@ model User {
   signatures       Signature[]
   auditLogs        AuditLog[]
   complianceReports ComplianceReport[]
+  pilotParticipations PilotParticipant[] @relation("PilotParticipants")
 
   @@map("users")
   @@index([walletAddress])
@@ -366,3 +447,126 @@ model TeamDocument {
   @@index([teamId])
   @@index([documentId])
 }
+
+model PilotProgram {
+  id                      String          @id @default(cuid())
+  organizationName        String
+  industryType            IndustryType
+  contactPerson           String
+  contactEmail            String
+  contactPhone            String?
+  companySize             CompanySize
+  currentSolution         String?
+  estimatedDocumentVolume Int
+  status                  PilotStatus     @default(PENDING)
+  startDate               DateTime?
+  endDate                 DateTime?
+  goals                   Json            @default("[]")
+  specialRequirements     String?
+  complianceNeeds         Json            @default("[]")
+  createdAt               DateTime        @default(now())
+  updatedAt               DateTime        @updatedAt
+  approvedBy              String?
+  approvedAt              DateTime?
+  completionReport        String?
+  participants            PilotParticipant[]
+  feedback                PilotFeedback[]
+  analytics               PilotAnalytics[]
+
+  @@map("pilot_programs")
+  @@index([industryType])
+  @@index([status])
+  @@index([companySize])
+  @@index([createdAt])
+}
+
+model PilotParticipant {
+  id              String         @id @default(cuid())
+  pilotProgramId  String
+  userId          String
+  role            String
+  department      String?
+  joinedAt        DateTime       @default(now())
+  isActive        Boolean        @default(true)
+  usageStats      Json           @default("{}")
+  program         PilotProgram   @relation(fields: [pilotProgramId], references: [id], onDelete: Cascade)
+  user            User           @relation("PilotParticipants", fields: [userId], references: [id])
+  feedback        PilotFeedback[]
+
+  @@unique([pilotProgramId, userId])
+  @@map("pilot_participants")
+  @@index([pilotProgramId])
+  @@index([userId])
+  @@index([isActive])
+}
+
+model PilotFeedback {
+  id                    String           @id @default(cuid())
+  pilotProgramId        String
+  participantId         String
+  category              FeedbackCategory
+  rating                Int
+  feedback              String
+  suggestedImprovements String?
+  wouldRecommend        Boolean          @default(true)
+  createdAt             DateTime         @default(now())
+  isPublic              Boolean          @default(false)
+  program               PilotProgram     @relation(fields: [pilotProgramId], references: [id], onDelete: Cascade)
+  participant           PilotParticipant @relation(fields: [participantId], references: [id])
+
+  @@map("pilot_feedback")
+  @@index([pilotProgramId])
+  @@index([participantId])
+  @@index([category])
+  @@index([rating])
+  @@index([createdAt])
+}
+
+model IndustryTemplate {
+  id                      String        @id @default(cuid())
+  industryType            IndustryType
+  name                    String
+  description             String
+  templateType            TemplateType
+  documentFields          Json          @default("[]")
+  workflowSteps           Json          @default("[]")
+  complianceLevel         ComplianceLevel
+  estimatedCompletionTime Int
+  isActive                Boolean       @default(true)
+  usageCount              Int           @default(0)
+  createdAt               DateTime      @default(now())
+  updatedAt               DateTime      @updatedAt
+
+  @@map("industry_templates")
+  @@index([industryType])
+  @@index([templateType])
+  @@index([complianceLevel])
+  @@index([isActive])
+  @@index([usageCount])
+}
+
+model PilotAnalytics {
+  id                        String       @id @default(cuid())
+  pilotProgramId            String
+  totalParticipants         Int          @default(0)
+  activeParticipants        Int          @default(0)
+  documentsProcessed        Int          @default(0)
+  signaturesCompleted       Int          @default(0)
+  averageSatisfactionScore  Float        @default(0)
+  costSavings               Float        @default(0)
+  timeToCompletion          Float        @default(0)
+  complianceScore           Float        @default(0)
+  issuesReported            Int          @default(0)
+  issuesResolved            Int          @default(0)
+  periodStart               DateTime
+  periodEnd                 DateTime
+  createdAt                 DateTime     @default(now())
+  program                   PilotProgram @relation(fields: [pilotProgramId], references: [id], onDelete: Cascade)
+
+  @@map("pilot_analytics")
+  @@index([pilotProgramId])
+  @@index([periodStart])
+  @@index([periodEnd])
+  @@index([createdAt])
+}
+
