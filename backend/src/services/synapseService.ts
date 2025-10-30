@@ -1,25 +1,25 @@
-import { SynapseSDK } from '@filoz/synapse-sdk';
 import { ethers } from 'ethers';
+import { SiweMessage } from 'siwe';
 import { prisma } from '../utils/database';
 import { logger } from '../utils/logger';
 import jwt from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
-const SYNAPSE_API_KEY = process.env.SYNAPSE_API_KEY;
+const WALLETCONNECT_PROJECT_ID = process.env.WALLETCONNECT_PROJECT_ID || 'demo-project-id';
 
 /**
- * Synapse SDK Service
- * Handles wallet-based authentication and user management using Filecoin's Synapse SDK
+ * Wallet Authentication Service
+ * Handles wallet-based authentication using WalletConnect and Sign-In with Ethereum (SIWE)
  */
-export class SynapseService {
-  private sdk: SynapseSDK;
+export class WalletAuthService {
+  private provider: ethers.providers.JsonRpcProvider;
 
   constructor() {
-    // Initialize Synapse SDK
-    this.sdk = new SynapseSDK({
-      apiKey: SYNAPSE_API_KEY,
-      network: process.env.FILECOIN_NETWORK || 'calibration', // calibration for testnet, mainnet for production
-    });
+    // Initialize Filecoin RPC provider
+    const rpcUrl = process.env.FILECOIN_RPC_URL || 'https://api.calibration.node.glif.io/rpc/v1';
+    this.provider = new ethers.providers.JsonRpcProvider(rpcUrl);
+    
+    logger.info('Wallet Authentication Service initialized');
   }
 
   /**
